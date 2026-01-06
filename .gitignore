@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# uv
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Agent state (user-specific)
+agents/state/sessions/*
+!agents/state/sessions/.gitkeep
+
+# Session files are user-specific
+# (inbox .md files ARE tracked as templates)
+
+# Local settings
+.claude/settings.local.json

@@ -1,0 +1,51 @@
+# Oracle Instructions for {PROJECT_NAME}
+
+**Project-specific instructions for code review work.**
+
+For portable oracle role definition, see `oracle.agent.md`.
+For project review calibration, see `oracle.context.md`.
+
+---
+
+## Daemon Mode (Queue Processing)
+
+**When user says "enter daemon mode":**
+
+**Loop:**
+1. `uv run python src/inbox.py wait oracle-daemon --timeout 300` -> **blocks until message arrives** (no polling)
+2. When message returns: claim -> review -> respond
+3. **After each daemon request:** spot-check main oracle inbox (`uv run python src/inbox.py read oracle`)
+4. Loop back to wait
+
+**On timeout:** Loop again (keep waiting). Timeout just means "no messages yet", not "stop".
+
+**Exit when:** User explicitly says stop, OR context limit approaching.
+
+**Commands:**
+```bash
+# Block until message (returns JSON when one arrives)
+uv run python src/inbox.py wait oracle-daemon --timeout 300
+
+# Process message
+uv run python src/inbox.py claim oracle-daemon {id}        # -> save token
+uv run python src/inbox.py respond oracle-daemon {id} --token {token} --body "..."
+
+# Spot-check main inbox between daemon requests
+uv run python src/inbox.py read oracle
+```
+
+---
+
+## Review Calibration
+
+<!-- Customize: Add project-specific review focus -->
+
+**DO review for:**
+- Silent failures (will it break quietly?)
+- Logic correctness
+- Evidence-based claims (did they test 3-5 examples?)
+
+**DON'T review for:**
+- Test coverage (unless project requires it)
+- Comprehensive error handling
+- Edge cases that won't happen
