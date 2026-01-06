@@ -81,8 +81,8 @@ uv run python src/inbox.py add oracle "Review auth module" --from engineer:swift
 # Read inbox
 uv run python src/inbox.py read engineer
 
-# Daemon mode (oracle waits for reviews)
-uv run python src/inbox.py wait oracle-daemon --timeout 300
+# Review queue (oracle processes review requests)
+uv run python src/inbox.py wait reviews --timeout 300
 ```
 
 ## Design Principles

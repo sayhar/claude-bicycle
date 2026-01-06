@@ -9,19 +9,25 @@ For project facts, see `engineer.context.md`.
 
 ## Requesting Code Reviews
 
-<!-- Customize: Add project-specific review workflow -->
+**TWO REVIEWS REQUIRED:**
+1. BEFORE coding (design review) - prefix with "Design:"
+2. AFTER coding (code review) - prefix with "Code:"
 
-**Option 1: Daemon (if oracle is running in daemon mode)**
+**Send to `reviews` queue:**
 ```bash
-uv run python src/inbox.py add oracle-daemon "Review {topic}" \
-  --from engineer:{session-name} --priority 2 \
-  --body "Files: {paths}..."
-
-uv run python src/inbox.py wait engineer --from oracle-daemon --timeout 180
+uv run python src/inbox.py add reviews "Design: {topic}" \
+  --from engineer --priority HIGH --body "{details}"
 ```
 
-**Option 2: Subagent (fallback)**
-Use Task tool with `subagent_type=oracle`.
+**Wait for response:**
+```bash
+uv run python src/inbox.py wait engineer --from reviews --timeout 180
+```
+
+**If no response after 3+ minutes:** Spawn background oracle subagent:
+```
+Task tool, subagent_type="oracle", run_in_background=true
+```
 
 ---
 

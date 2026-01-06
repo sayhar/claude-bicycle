@@ -24,7 +24,7 @@ from rich.panel import Panel
 
 console = Console()
 
-VALID_ROLES = ["engineer", "oracle", "meta", "architect", "oracle-daemon"]
+VALID_ROLES = ["engineer", "oracle", "meta", "architect", "reviews"]
 VALID_PRIORITIES = ["HIGH", "MEDIUM", "LOW"]
 INBOX_DIR = Path("agents/state/inboxes")
 SESSIONS_DIR = Path("agents/state/sessions")

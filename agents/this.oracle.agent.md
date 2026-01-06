@@ -7,31 +7,31 @@ For project review calibration, see `oracle.context.md`.
 
 ---
 
-## Daemon Mode (Queue Processing)
+## Review Queue Processing
 
-**When user says "enter daemon mode":**
+**When user says "enter daemon mode" or "process reviews":**
 
 **Loop:**
-1. `uv run python src/inbox.py wait oracle-daemon --timeout 300` -> **blocks until message arrives** (no polling)
+1. `uv run python src/inbox.py wait reviews --timeout 300` -> **blocks until message arrives**
 2. When message returns: claim -> review -> respond
-3. **After each daemon request:** spot-check main oracle inbox (`uv run python src/inbox.py read oracle`)
-4. Loop back to wait
+3. Loop back to wait
 
 **On timeout:** Loop again (keep waiting). Timeout just means "no messages yet", not "stop".
 
 **Exit when:** User explicitly says stop, OR context limit approaching.
 
+**Review types** (engineers prefix their messages):
+- "Design: ..." -> design/architecture review (BEFORE coding)
+- "Code: ..." -> code review (AFTER coding)
+
 **Commands:**
 ```bash
 # Block until message (returns JSON when one arrives)
-uv run python src/inbox.py wait oracle-daemon --timeout 300
+uv run python src/inbox.py wait reviews --timeout 300
 
 # Process message
-uv run python src/inbox.py claim oracle-daemon {id}        # -> save token
-uv run python src/inbox.py respond oracle-daemon {id} --token {token} --body "..."
-
-# Spot-check main inbox between daemon requests
-uv run python src/inbox.py read oracle
+uv run python src/inbox.py claim reviews {id}        # -> save token
+uv run python src/inbox.py respond reviews {id} --token {token} --body "..."
 ```
 
 ---
