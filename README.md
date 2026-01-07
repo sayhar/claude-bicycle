@@ -72,25 +72,60 @@ src/
 
 Say "engineer", "oracle", or "meta" as your first message to route to that role.
 
-### Inter-agent Communication
+### Review Workflow
+
+**Engineer sends review request:**
+```bash
+uv run python src/inbox.py add reviews "Design: new auth module" \
+  --from engineer:swift-falcon --priority HIGH --body "..."
+uv run python src/inbox.py wait engineer --from reviews --timeout 180
+```
+
+**Oracle processes reviews (daemon mode):**
+```bash
+# 1. Check oracle inbox
+uv run python src/inbox.py peek oracle
+
+# 2. Block on reviews queue
+uv run python src/inbox.py wait reviews --timeout 3000
+
+# 3. If message arrives: claim, review, respond
+uv run python src/inbox.py claim reviews {id}
+uv run python src/inbox.py respond reviews {id} --token {token} --body "..."
+```
+
+### General Inter-agent Communication
 
 ```bash
-# Send message
-uv run python src/inbox.py add oracle "Review auth module" --from engineer:swift-falcon --body "..."
+# Send message to any role
+uv run python src/inbox.py add {role} "title" --from {sender}:{name} --body "..."
 
 # Read inbox
-uv run python src/inbox.py read engineer
+uv run python src/inbox.py read {role}
 
-# Review queue (oracle processes review requests)
-uv run python src/inbox.py wait reviews --timeout 300
+# Claim work item
+uv run python src/inbox.py claim {role} {id}
+
+# Delete completed item
+uv run python src/inbox.py delete {role} {id}
 ```
 
 ## Design Principles
 
-1. **Portable vs Project-specific**: `*.agent.md` works anywhere, `this.*.agent.md` is customized
-2. **Instructions vs Facts**: `this.*.agent.md` has rules, `*.context.md` has facts
-3. **Minimal bootup**: These files load every session - keep them concise
-4. **Session continuity**: Agents can resume previous work via session files
+1. **Portable vs Project-specific**:
+   - `*.agent.md` — Generic role definitions, work in any project (copy to new projects)
+   - `this.*.agent.md` — Project-specific overrides (should be minimal/template-like)
+   - `*.context.md` — Project facts (what's true about this project)
+
+2. **Instructions vs Facts**:
+   - Rules ("always do X") → `*.agent.md` or `this.*.agent.md`
+   - Facts ("X is true") → `*.context.md`
+
+3. **Minimal bootup**: These files load every session - keep concise
+   - Verbose explanations → README or other docs
+   - Dense principles → bootup files
+
+4. **Session continuity**: Agents can resume previous work via session files (`agents/state/sessions/`)
 
 ## License
 

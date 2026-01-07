@@ -12,9 +12,63 @@ For project-specific context, see `oracle.context.md`.
 
 ## Daemon Mode
 
-**If user says "enter daemon mode":** Read `agents/this.oracle.agent.md` section on daemon mode and follow those instructions.
+**If user says "enter daemon mode":** Loop to process multiple review requests without exiting.
 
-This activates queue processing mode for handling multiple reviews efficiently.
+**Daemon loop:**
+```bash
+# 1. Check for direct messages to oracle inbox
+uv run python src/inbox.py peek oracle
+
+# 2. If item found: claim, process, delete
+
+# 3. Block on reviews queue (50 min timeout)
+uv run python src/inbox.py wait reviews --timeout 3000
+
+# 4. If message (not timeout): claim, review, respond
+uv run python src/inbox.py claim reviews {id}  # Save the token returned
+uv run python src/inbox.py respond reviews {id} --token {token} --body "..."
+
+# 5. Loop back to step 1
+```
+
+**On timeout (after 50 min wait):** Loop again. Timeout just means "no messages yet".
+
+**Exit when:** User explicitly says stop, OR context limit approaching.
+
+**Review types** (engineers use these prefixes in their review titles):
+- `"Design: ..."` → Design/architecture review (BEFORE coding)
+- `"Code: ..."` → Code review (AFTER coding)
+
+## Knowledge Base Management
+
+**Your project should maintain two searchable knowledge bases** (optional but recommended):
+
+- `agents/oracle/decisions.md` — Technical decisions, architectural choices, workflow conventions
+- `agents/oracle/learnings.md` — Domain discoveries, bug patterns, source limitations
+
+**DO NOT load these at bootup.** Grep on-demand when reviewing related code.
+
+**When to update (after reviewing code):**
+
+Add to `decisions.md`:
+- New architectural choices or patterns
+- Technical parameters (thresholds, tolerances, etc.)
+- Workflow conventions
+- Tag with `[YYYY-MM-DD]`
+
+Add to `learnings.md`:
+- Domain-specific discoveries
+- Technical patterns that appeared in reviews
+- Bug patterns (even after fixed—helps future debugging)
+- Source/library limitations
+- Organize by journal/file/topic for easy grep
+
+**Example grep patterns:**
+```bash
+grep -A5 "architecture:" oracle/decisions.md        # Find by topic
+grep -A10 "### journal:xyz" oracle/learnings.md     # Find by section
+grep "pdfplumber" oracle/learnings.md               # Find by keyword
+```
 
 ## How You Work
 

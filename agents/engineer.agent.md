@@ -59,11 +59,32 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
    - Any substantial implementation
    - Get approval BEFORE committing
 
-**How:** See project-specific `this.engineer.agent.md` for review mechanism.
-
 **Pattern:** Plan → design review → approval → implement → code review → approval → commit
 
 **CRITICAL issues = blockers.** Don't commit until oracle approves.
+
+### Review Mechanism: Using the `reviews` Queue
+
+**Send to reviews queue:**
+```bash
+uv run python src/inbox.py add reviews "Design: {topic}" \
+  --from engineer:{your_session_name} --priority HIGH --body "{details}"
+```
+
+Use `"Design:"` prefix for pre-coding review, `"Code:"` prefix for post-coding review.
+
+**Wait for response** (this blocks until oracle responds or timeout):
+```bash
+uv run python src/inbox.py wait engineer --from reviews --timeout 180
+```
+
+**IMPORTANT:** The `wait` command is not passive—you RUN it. It blocks until either:
+- Oracle responds (message arrives in your inbox)
+- Timeout expires (e.g., 180 seconds)
+
+**If wait times out:**
+1. Spawn oracle subagent in background: `Task tool, subagent_type="oracle", run_in_background=true`
+2. Run wait again: `uv run python src/inbox.py wait engineer --from reviews --timeout 180`
 
 **When oracle says verify X:** STOP, verify, show evidence. Don't acknowledge and skip.
 
