@@ -126,7 +126,7 @@ Read recent session TL;DRs (`head -20` on last 4 files), then offer:
 read {role}                          # Display inbox (shows IDs, claim status)
 peek {role} [--from {sender}]        # First unclaimed item as JSON (filter by sender)
 wait {role} --timeout {seconds} [--from {sender}]  # Block until item or timeout
-add {role} "title" --from {role}:{name} --priority Y --body "..."
+add {role} "title" --from {role}:{name} --priority {HIGH|MEDIUM|LOW} --body "..."
 claim {role} {id}                    # Returns session token, adds timestamp
 unclaim {role} {id} --token {token}  # Release claim
 delete {role} {id}                   # Remove completed item
