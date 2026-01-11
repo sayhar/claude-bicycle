@@ -1,164 +1,240 @@
 # Agent Framework
 
-A lightweight coordination system for Claude Code agents. Provides role-based routing, inter-agent messaging, session continuity, and code review workflows.
-
-## Getting Started
-
-**Option A: Clone as your project** (recommended)
-```bash
-git clone https://github.com/sayhar/agent-framework my-project-name
-cd my-project-name
-```
-
-**Option B: GitHub template** (if enabled on the repo)
-Click "Use this template" on GitHub → creates a fresh repo with no fork relationship.
+A bicycle for Claude Code.
 
 ---
 
-## Quick Setup
+## Why This Exists
+
+Has this happened to you? You're three hours into a Claude Code session, making real progress, and then -- oops, you hit a context limit. You spin up a fresh conversation. Claude has no idea what you just did, decided, learned.
+
+So you start copy-pasting things. Keeping notes. TELLING Claude to take notes. Maybe you start with a scratch "Bootup.md" file that says "remember: we're using approach X because of Y."
+
+Then that scratch file gets more complicated. You split "things that you should always remember on bootup" from session notes from "things worth looking up."
+
+You create different personas. The code reviewer. The engineer. The librarian. Each with their own bootup files. And they need to talk to each other. You set up inboxes for them to coordinate. The inboxes get fancier.
+
+Now hooks to stop them from being dumb. Special subagents. More rigorous code reviews.
+
+And then... wait, this works for your next project too. You port this between projects. You have a "team" of agents that you trust and bring to new tasks.
+
+This repo is what that all became. A bicycle for Claude Code.
+
+---
+
+## What You Get
+
+You close your laptop, come back three days later, and Claude offers to continue "swift-falcon: fixing the auth module" -- already knowing what it tried, what worked, what didn't. No re-explaining.
+
+You get code reviewed by a different Claude. Not the same one wearing a "critic hat" -- a separate instance that wasn't in the room when you made the decisions. It catches that your parser assumes a field that doesn't exist in half the test cases. Builder-brain would've missed it.
+
+You spin up five agents and they coordinate. One builds, one reviews, one keeps notes on decisions and mistakes. They leave each other messages through inboxes. You go make coffee. When you come back, there's a review waiting.
+
+Three weeks in, Claude asks "are we still using the retry pattern from the auth module?" It checks decisions.md. Yes. Proceeds correctly without asking you.
+
+You bring this to your next project. The roles you've defined, the patterns that work, the review calibration you trust. It's markdown files and a Python script -- you can read every file and understand what's happening.
+
+Without this, Claude forgets your architectural decisions the moment the session ends. Reviews feel hollow because the reviewer has builder-brain. You re-explain the same context for the fifth time. The bicycle gives you leverage.
+
+---
+
+## Quick Start
 
 ```bash
-claude   # Start Claude Code
-> meta   # Say "meta" to load the meta agent
-> help me set up this project
+cp -r agent-framework/ your-project/
+cd your-project
+claude
 ```
+
+Say "meta" -- it walks you through setup.
 
 Or work through `SETUP.md` manually.
 
 ---
 
-## How It Works
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         .claude/CLAUDE.md                           │
-│                    (Entry point - routes by role)                   │
-└─────────────────────────────────────────────────────────────────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-                    ▼              ▼              ▼
-              ┌──────────┐  ┌──────────┐  ┌──────────┐
-              │ engineer │  │  oracle  │  │   meta   │
-              └────┬─────┘  └────┬─────┘  └────┬─────┘
-                   │             │             │
-                   ▼             ▼             ▼
-              ┌─────────────────────────────────────┐
-              │           agents/*.agent.md         │
-              │     (Portable role definitions)     │
-              ├─────────────────────────────────────┤
-              │        agents/this.*.agent.md       │
-              │    (Project-specific instructions)  │
-              ├─────────────────────────────────────┤
-              │         agents/*.context.md         │
-              │       (Project-specific facts)      │
-              └─────────────────────────────────────┘
-                               │
-         ┌─────────────────────┼─────────────────────┐
-         ▼                     ▼                     ▼
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  state/inboxes  │  │ state/sessions  │  │   oracle/*.md   │
-│  (messages)     │  │ (continuity)    │  │ (knowledge)     │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-```
-
----
-
-## Features
-
-### Role-Based Agents
-
-| Role | Purpose |
-|------|---------|
-| **engineer** | Implementation - writing code, fixing bugs, building features |
-| **oracle** | Code review - critique quality, find bugs, suggest improvements |
-| **meta** | System maintenance - update agent bootup files, fix patterns |
-
-Say the role name as your first message to route to that agent.
-
-### Inter-Agent Messaging
-
-Agents communicate via inbox files managed by `src/inbox.py`:
-
-```bash
-uv run python src/inbox.py add oracle "Review auth module" --from engineer:swift-falcon
-uv run python src/inbox.py read oracle
-uv run python src/inbox.py claim oracle <id>
-uv run python src/inbox.py delete oracle <id>
-```
-
-### Session Continuity
-
-Each work thread gets a memorable name (e.g., "swift-falcon") and a session file:
-
-- **Lines 1-20:** Living TL;DR (updated each continuation)
-- **Lines 21+:** Append-only log
-
-When context limits approach, agents update their session file for handoff.
-
-### Review Workflow
-
-Engineers can request reviews and block until response:
-
-```bash
-# Engineer sends review request
-uv run python src/inbox.py add reviews "Design: new auth" --from engineer:swift-falcon
-uv run python src/inbox.py wait engineer --from reviews --timeout 180
-
-# Oracle processes reviews queue
-uv run python src/inbox.py wait reviews --timeout 3000
-uv run python src/inbox.py respond reviews <id> --token <tok> --body "Approved with notes..."
-```
-
-### Subagent Spawning
-
-Parent agents can spawn scoped subagents via `.claude/agents/*.md` shims. Subagents have restrictions (no git operations, tool limits) and report back to parent.
-
-### Knowledge Base
-
-Oracle maintains persistent knowledge in `agents/oracle/`:
-- `decisions.md` - Architectural choices, tagged by date
-- `learnings.md` - Domain discoveries, bug patterns
-
----
-
-## File Structure
+## What's In The Box
 
 ```
 agents/
-  *.agent.md           # Portable role definitions (copy to new projects)
-  this.*.agent.md      # Project-specific instructions
-  *.context.md         # Project-specific facts
+  *.agent.md           # Role definitions (portable)
+  this.*.agent.md      # Your project's instructions
+  *.context.md         # Your project's facts
   principles/          # Engineering methodology
-  state/
-    inboxes/           # Inter-agent messages
-    sessions/          # Session continuity files
 
   oracle/
-    decisions.md       # Technical decisions log (Oracle-owned)
-    learnings.md       # Domain learnings log (Oracle-owned)
+    decisions.md       # "We chose X because Y"
+    learnings.md       # "This broke because Z"
 
-.claude/
-  CLAUDE.md            # Entry point with @imports and routing
-  agents/              # Subagent shim definitions
+  state/
+    sessions/          # Session continuity
+    inboxes/           # Agent coordination
 
+hooks/                 # Guardrails
 src/
-  inbox.py             # Messaging CLI
+  inbox.py             # Coordination CLI
   agent_name.py        # Session name generator
-
-tmp/                   # Session scratch files (gitignored)
 ```
 
 ---
 
-## Design Principles
+### Roles
 
-1. **Portable vs Project-specific**: `*.agent.md` files work in any project. `this.*.agent.md` and `*.context.md` are customized per project.
+Say a word, load a mindset.
 
-2. **Instructions vs Facts**: Rules go in `*.agent.md`. Facts go in `*.context.md`.
+**engineer** -- Build things. Write code, fix bugs, ship features.
 
-3. **Minimal bootup**: These files load every session. Keep them concise.
+**oracle** -- Review things. Critique code, find bugs, maintain the knowledge base.
 
-4. **Session continuity**: Agents can resume previous work via session files.
+**meta** -- Modify the system itself. Update agent files, fix patterns, add new roles.
+
+Each role loads its own files:
+- `{role}.agent.md` -- portable, bring to any project
+- `this.{role}.agent.md` -- instructions for THIS project
+- `{role}.context.md` -- facts about THIS project
+- `principles/engineering.md` -- shared methodology
+
+---
+
+### Sessions
+
+Each work thread gets a name like "swift-falcon" and a file:
+
+```markdown
+# Engineer Session: swift-falcon
+
+## TL;DR
+**Task:** Fixing the auth module
+**Status:** In progress
+**Completed:** Fixed token refresh, added retry logic
+**Next:** Handle edge case when token is expired mid-request
+**Files Modified:** src/auth.py, src/retry.py
+```
+
+Lines 1-20 are a living summary (edited each time). Lines 21+ are append-only log.
+
+When you come back, Claude reads this and offers to continue. When context limits hit, Claude updates it before stopping.
+
+---
+
+### Inboxes
+
+Agents coordinate through `src/inbox.py`:
+
+```bash
+# Send a message
+uv run python src/inbox.py add oracle "Review auth module" \
+  --from engineer:swift-falcon --priority HIGH
+
+# Check your inbox
+uv run python src/inbox.py read engineer
+
+# Claim an item (prevents double-processing)
+uv run python src/inbox.py claim engineer abc123
+
+# Block until a message arrives
+uv run python src/inbox.py wait engineer --from oracle --timeout 300
+
+# Respond (atomic: deletes original + sends reply)
+uv run python src/inbox.py respond engineer abc123 --token xyz --body "Done."
+```
+
+Handles concurrent access. No race conditions.
+
+---
+
+### Knowledge Base
+
+Oracle maintains two files:
+
+**decisions.md** -- Architectural choices:
+```markdown
+### [2024-01-15] Authentication
+Using JWT with refresh tokens because session storage
+doesn't scale for our use case.
+```
+
+**learnings.md** -- Mistakes and discoveries:
+```markdown
+### Parser Edge Cases
+Empty input returns null, not empty array.
+Found this when user submitted blank form.
+```
+
+Agents grep these when relevant -- not loaded at boot.
+
+---
+
+### The Oracle System
+
+Engineers should check in with oracle before and after significant work. Design review before coding, code review after. (You can remind them if they forget.)
+
+**Daemon mode:** Have an oracle tab open to the side. It monitors its inbox, responds to reviews, and keeps you informed.
+
+```
+"Enter daemon mode. Monitor the reviews inbox and respond to requests."
+```
+
+Oracle will loop: check inbox -> wait for reviews -> respond -> repeat. It tells you what engineers are asking about.
+
+---
+
+### Typical Setup
+
+**Tabs:**
+1. 2-3 engineer tabs -- doing the work
+2. Oracle tab -- daemon mode, handling reviews
+3. Meta tab -- restructuring, reading retrospectives, tweaking the system
+
+**How it flows:**
+
+Engineers boot up and either:
+- Continue a previous session ("swift-falcon: fixing auth module")
+- Grab tasks from inbox
+- Work interactively with you
+
+As they work, they ask oracle for help -- via inbox if daemon is running, via subagent if not.
+
+Oracle and engineers spawn subagents to investigate problems, then break ideas into subtasks.
+
+Some engineers can auto-run: grab inbox items, decompose them, orchestrate subagents.
+
+When something goes wrong:
+- Process issue -> message to meta (fix the system)
+- Code bug -> message to oracle (document in learnings)
+
+---
+
+### Hooks
+
+Optional guardrails in `hooks/`:
+
+| Hook | What it does |
+|------|--------------|
+| `no-compound-bash.py` | Blocks `cmd1 && cmd2` -- forces single debuggable commands |
+| `no-heredoc.py` | Blocks heredocs -- forces proper file writes |
+| `require-uv.py` | Blocks bare `python`/`pip` -- forces `uv run` |
+| `warn-conventional-commit.py` | Warns on non-conventional commit messages |
+| `no-new-md-files.py` | Warns when creating .md files |
+
+Enable in `.claude/settings.local.json`. They teach Claude your preferences by blocking bad patterns.
+
+---
+
+### Subagents
+
+Spawn focused workers via Task tool:
+
+```
+Parent: "Task tool, engineer subagent, fix the parser in src/parse.py"
+
+Subagent:
+  - Loads context files
+  - Cannot commit/push (parent handles git)
+  - Scoped to ~15 tool calls
+  - Reports back when done
+```
+
+Subagents that try to do too much will refuse and suggest how to break down the task.
 
 ---
 
