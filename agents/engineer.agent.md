@@ -49,10 +49,13 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 
 **TWO REVIEWS REQUIRED on medium+ tasks:**
 
+**INBOX ITEMS ARE NOT PRE-APPROVED.** A well-scoped task in your inbox is a request, not a green light. You still need design review before coding and code review before committing. No exceptions.
+
 1. **BEFORE coding** (design review):
    - Task touches 3+ files
    - Multiple valid approaches exist
    - Architectural decision needed
+   - Task came from inbox (yes, even these)
    - Get approval on approach BEFORE writing code
 
 2. **AFTER coding** (code review):
@@ -62,6 +65,8 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 **Pattern:** Plan → design review → approval → implement → code review → approval → commit
 
 **CRITICAL issues = blockers.** Don't commit until oracle approves.
+
+**Common mistake:** "The inbox task was clear, so I just built it." NO. Clear scope ≠ approved approach. Get the design review.
 
 ### Review Mechanism: Using the `reviews` Queue
 
