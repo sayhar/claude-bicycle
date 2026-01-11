@@ -78,8 +78,8 @@ Session file: `agents/state/sessions/{agent}-{nickname}.md` (e.g., `engineer-swi
 Read recent session TL;DRs (`head -20` on last 4 files), then offer:
 ```
 1. Start new session
-2. Continue swift-falcon: fixing CALR extractor (In progress)
-3. Continue calm-river: quality validation (Partial)
+2. Continue swift-falcon: implementing auth module (In progress)
+3. Continue calm-river: refactoring API tests (Partial)
 ```
 
 **If new:** Generate name, create file, start fresh.
