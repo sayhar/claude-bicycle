@@ -2,6 +2,19 @@
 
 A lightweight coordination system for Claude Code agents. Provides role-based routing, inter-agent messaging, session continuity, and code review workflows.
 
+## Getting Started
+
+**Option A: Clone as your project** (recommended)
+```bash
+git clone https://github.com/sayhar/agent-framework my-project-name
+cd my-project-name
+```
+
+**Option B: GitHub template** (if enabled on the repo)
+Click "Use this template" on GitHub → creates a fresh repo with no fork relationship.
+
+---
+
 ## Quick Setup
 
 ```bash
