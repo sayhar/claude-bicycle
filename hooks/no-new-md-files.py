@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Block creating new .md files - update existing docs instead.
+Warn when creating new .md files - update existing docs instead.
 
 Allows:
   - /tmp/*.md (throwaway)
@@ -54,14 +54,9 @@ def main():
     if os.path.exists(file_path):
         sys.exit(0)
 
-    # Block new .md file creation
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": f"Don't create new .md files. Update existing docs or use session notes. Each doc is debt.",
-        }
-    }))
+    # Warn about new .md file creation (but allow it)
+    print(f"Warning: Creating new .md file: {file_path}")
+    print("Consider: Update existing docs or use session notes. Each doc is debt.")
     sys.exit(0)
 
 
