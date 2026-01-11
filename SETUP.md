@@ -6,13 +6,9 @@ Work through this with `claude meta` or manually. When complete, delete this fil
 
 ## 1. Git Setup
 
-You copied this from agent-framework, but you'll push to your own repo.
+- [ ] **Remove origin**: `git remote remove origin`
 
-- [ ] **Remove origin** (skip if you copied files, not cloned): `git remote remove origin`
-- [ ] **Add your repo**: `git remote add origin <your-repo-url>`
-- [ ] **Verify**: `git remote -v`
-
-> **Ask user:** What's the git remote URL for this project?
+Add your own remote later when you have one.
 
 ---
 
@@ -40,7 +36,7 @@ Replace `{PROJECT_NAME}` and "Agent Framework" with your actual project name.
 
 ## 3. Dependencies
 
-- [ ] **Verify uv installed**: `uv --version`
+- [ ] **Install uv** (if needed)
 - [ ] **Install deps**: `uv sync`
 - [ ] **Test inbox**: `uv run python src/inbox.py read engineer` (should show empty)
 - [ ] **Test name gen**: `uv run python src/agent_name.py` (should output a name)
@@ -104,24 +100,53 @@ This is a kickoff conversation. Take time here.
 
 ---
 
-### 4.4 Existing Codebase (skip if new project)
+### 4.4 Existing Codebase
 
-If there's already code:
-- Main directories/modules?
-- Entry point? How is it organized?
-- Commands to run/test/deploy?
+**If adding agent-framework to an existing project:**
 
-- [ ] Filled in architecture (if applicable)
+Tech stack and architecture are already decided - write them as facts in context files:
+- `base.context.md` - tech stack, project structure
+- `engineer.context.md` - architecture, key modules, how things connect
 
----
+Skip to section 6 (Cleanup).
 
-## 5. Cleanup
-
-When you're satisfied with the context files:
-
-- [ ] Delete this file: `rm SETUP.md`
-- [ ] Delete the setup inbox item: `uv run python src/inbox.py delete meta ba68b7c`
+**If starting a new project:** Continue to section 5.
 
 ---
 
-**Setup complete!** Start working by running `claude` and saying "engineer", "oracle", or "meta".
+## 5. Architecture Review (new projects only)
+
+For new projects, tech decisions should be reviewed before implementing.
+
+Send to oracle:
+```bash
+uv run python src/inbox.py add oracle "Setup Review: Technical approach for {PROJECT_NAME}" \
+  --from meta:setup --priority HIGH --body "
+## Technical Decisions to Review
+
+- Tech stack: [languages, frameworks, databases]
+- Architecture: [pattern, structure]
+- Key libraries: [and why]
+
+## Open Questions
+
+[Any tradeoffs or uncertainties]
+"
+```
+
+- [ ] Sent inbox to oracle
+
+**Next:** Run `claude oracle` to review, then `claude engineer` to implement.
+
+---
+
+## 6. Cleanup
+
+When setup is complete:
+
+```bash
+rm SETUP.md
+uv run python src/inbox.py delete meta ba68b7c
+```
+
+Then prompt user: "Setup complete! Type `/exit` and run `claude oracle` to review technical decisions before implementing." (For existing projects with established tech stack, they can go straight to `claude engineer`.)
