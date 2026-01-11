@@ -1,131 +1,153 @@
 # Agent Framework
 
-A lightweight agent coordination system for Claude Code.
+A lightweight coordination system for Claude Code agents. Provides role-based routing, inter-agent messaging, session continuity, and code review workflows.
 
-## Quick Start
+## Quick Setup
 
-1. Copy this framework to your project:
-   ```bash
-   cp -r agent-framework/agents your-project/
-   cp -r agent-framework/.claude your-project/
-   cp agent-framework/src/inbox.py your-project/src/
-   cp agent-framework/src/agent_name.py your-project/src/
-   ```
-
-2. Customize the template files:
-   - Replace `{PROJECT_NAME}` in all files
-   - Edit `agents/this.*.agent.md` with project-specific instructions
-   - Edit `agents/*.context.md` with project-specific facts
-
-3. Initialize uv (if not already):
-   ```bash
-   cd your-project
-   uv init
-   uv add rich   # Required for inbox.py
-   ```
-
-4. Start Claude Code in your project directory
-
-## Structure
-
-```
-agents/
-  base.agent.md          # Portable: Agent coordination patterns
-  engineer.agent.md      # Portable: Engineer role definition
-  oracle.agent.md        # Portable: Oracle role definition
-  meta.agent.md          # Portable: Meta role definition
-  principles/
-    engineering.md       # Portable: Engineering methodology
-
-  this.base.agent.md     # Customize: Project-wide instructions
-  this.engineer.agent.md # Customize: Engineer instructions
-  this.oracle.agent.md   # Customize: Oracle instructions
-  this.meta.agent.md     # Customize: Meta instructions
-
-  base.context.md        # Customize: Project facts
-  engineer.context.md    # Customize: Engineer context
-  oracle.context.md      # Customize: Oracle context
-
-  state/
-    sessions/            # Agent session notes
-    inboxes/             # Inter-agent communication
-
-.claude/
-  CLAUDE.md              # Entry point with @imports
-  agents/                # Subagent shim definitions
-    engineer.md
-    oracle.md
-    meta.md
-
-src/
-  inbox.py               # Inter-agent messaging
-  agent_name.py          # Session name generator
+```bash
+claude   # Start Claude Code
+> meta   # Say "meta" to load the meta agent
+> help me set up this project
 ```
 
-## Agent Roles
+Or work through `SETUP.md` manually.
 
-- **engineer**: Implementation work - writing code, fixing bugs
-- **oracle**: Code review - critique quality, find bugs
-- **meta**: Agent system maintenance - update bootup files
+---
 
-## Usage
+## How It Works
 
-Say "engineer", "oracle", or "meta" as your first message to route to that role.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         .claude/CLAUDE.md                           │
+│                    (Entry point - routes by role)                   │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+              ┌──────────┐  ┌──────────┐  ┌──────────┐
+              │ engineer │  │  oracle  │  │   meta   │
+              └────┬─────┘  └────┬─────┘  └────┬─────┘
+                   │             │             │
+                   ▼             ▼             ▼
+              ┌─────────────────────────────────────┐
+              │           agents/*.agent.md         │
+              │     (Portable role definitions)     │
+              ├─────────────────────────────────────┤
+              │        agents/this.*.agent.md       │
+              │    (Project-specific instructions)  │
+              ├─────────────────────────────────────┤
+              │         agents/*.context.md         │
+              │       (Project-specific facts)      │
+              └─────────────────────────────────────┘
+                               │
+         ┌─────────────────────┼─────────────────────┐
+         ▼                     ▼                     ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  state/inboxes  │  │ state/sessions  │  │ oracle/*.md     │
+│  (messages)     │  │ (continuity)    │  │ (knowledge)     │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
+## Features
+
+### Role-Based Agents
+
+| Role | Purpose |
+|------|---------|
+| **engineer** | Implementation - writing code, fixing bugs, building features |
+| **oracle** | Code review - critique quality, find bugs, suggest improvements |
+| **meta** | System maintenance - update agent bootup files, fix patterns |
+
+Say the role name as your first message to route to that agent.
+
+### Inter-Agent Messaging
+
+Agents communicate via inbox files managed by `src/inbox.py`:
+
+```bash
+uv run python src/inbox.py add oracle "Review auth module" --from engineer:swift-falcon
+uv run python src/inbox.py read oracle
+uv run python src/inbox.py claim oracle <id>
+uv run python src/inbox.py delete oracle <id>
+```
+
+### Session Continuity
+
+Each work thread gets a memorable name (e.g., "swift-falcon") and a session file:
+
+- **Lines 1-20:** Living TL;DR (updated each continuation)
+- **Lines 21+:** Append-only log
+
+When context limits approach, agents update their session file for handoff.
 
 ### Review Workflow
 
-**Engineer sends review request:**
+Engineers can request reviews and block until response:
+
 ```bash
-uv run python src/inbox.py add reviews "Design: new auth module" \
-  --from engineer:swift-falcon --priority HIGH --body "..."
+# Engineer sends review request
+uv run python src/inbox.py add reviews "Design: new auth" --from engineer:swift-falcon
 uv run python src/inbox.py wait engineer --from reviews --timeout 180
-```
 
-**Oracle processes reviews (daemon mode):**
-```bash
-# 1. Check oracle inbox
-uv run python src/inbox.py peek oracle
-
-# 2. Block on reviews queue
+# Oracle processes reviews queue
 uv run python src/inbox.py wait reviews --timeout 3000
-
-# 3. If message arrives: claim, review, respond
-uv run python src/inbox.py claim reviews {id}
-uv run python src/inbox.py respond reviews {id} --token {token} --body "..."
+uv run python src/inbox.py respond reviews <id> --token <tok> --body "Approved with notes..."
 ```
 
-### General Inter-agent Communication
+### Subagent Spawning
 
-```bash
-# Send message to any role
-uv run python src/inbox.py add {role} "title" --from {sender}:{name} --body "..."
+Parent agents can spawn scoped subagents via `.claude/agents/*.md` shims. Subagents have restrictions (no git operations, tool limits) and report back to parent.
 
-# Read inbox
-uv run python src/inbox.py read {role}
+### Knowledge Base
 
-# Claim work item
-uv run python src/inbox.py claim {role} {id}
+Oracle maintains persistent knowledge in `oracle/`:
+- `decisions.md` - Architectural choices, tagged by date
+- `learnings.md` - Domain discoveries, bug patterns
 
-# Delete completed item
-uv run python src/inbox.py delete {role} {id}
+---
+
+## File Structure
+
 ```
+agents/
+  *.agent.md           # Portable role definitions (copy to new projects)
+  this.*.agent.md      # Project-specific instructions
+  *.context.md         # Project-specific facts
+  principles/          # Engineering methodology
+  state/
+    inboxes/           # Inter-agent messages
+    sessions/          # Session continuity files
+
+oracle/
+  decisions.md         # Technical decisions log
+  learnings.md         # Domain learnings log
+
+.claude/
+  CLAUDE.md            # Entry point with @imports and routing
+  agents/              # Subagent shim definitions
+
+src/
+  inbox.py             # Messaging CLI
+  agent_name.py        # Session name generator
+
+tmp/                   # Session scratch files (gitignored)
+```
+
+---
 
 ## Design Principles
 
-1. **Portable vs Project-specific**:
-   - `*.agent.md` — Generic role definitions, work in any project (copy to new projects)
-   - `this.*.agent.md` — Project-specific overrides (should be minimal/template-like)
-   - `*.context.md` — Project facts (what's true about this project)
+1. **Portable vs Project-specific**: `*.agent.md` files work in any project. `this.*.agent.md` and `*.context.md` are customized per project.
 
-2. **Instructions vs Facts**:
-   - Rules ("always do X") → `*.agent.md` or `this.*.agent.md`
-   - Facts ("X is true") → `*.context.md`
+2. **Instructions vs Facts**: Rules go in `*.agent.md`. Facts go in `*.context.md`.
 
-3. **Minimal bootup**: These files load every session - keep concise
-   - Verbose explanations → README or other docs
-   - Dense principles → bootup files
+3. **Minimal bootup**: These files load every session. Keep them concise.
 
-4. **Session continuity**: Agents can resume previous work via session files (`agents/state/sessions/`)
+4. **Session continuity**: Agents can resume previous work via session files.
+
+---
 
 ## License
 
