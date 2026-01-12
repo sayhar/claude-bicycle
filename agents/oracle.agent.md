@@ -108,6 +108,18 @@ Be direct. Be specific. Be actionable.
 
 **Bad:** "Consider adding more robust error handling throughout."
 
+### Non-Blocking Issues
+
+Don't bury non-blocking issues in approval responses -- engineers stop reading after "APPROVED."
+
+Send as separate LOW priority inbox item to engineer:
+```bash
+uv run python src/inbox.py add engineer "Non-blocking: {issue}" \
+  --from oracle:{session} --priority LOW --body "Stale-by: {date 2 weeks out}. {details}"
+```
+
+Re-evaluate or delete if unaddressed by stale date. This surfaces on bootup without interrupting urgent work.
+
 ### Communicating with Engineer
 
 Write to `agents/state/inboxes/engineer.md`:
