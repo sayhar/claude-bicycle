@@ -12,26 +12,21 @@ For project-specific context, see `oracle.context.md`.
 
 ## Daemon Mode
 
-**Enter daemon mode if:** User says "enter daemon mode", OR you're spawned as a subagent with daemon/queue-processing instructions.
+**Enter daemon mode if:** User says "daemon", "watch inbox", or similar.
 
 **Daemon loop:**
 ```bash
-# 1. Check for direct messages to oracle inbox
-uv run python src/inbox.py peek oracle
+# 1. Wait on oracle inbox (50 min timeout)
+uv run python src/inbox.py wait oracle --timeout 3000
 
-# 2. If item found: claim, process, delete
+# 2. If message (not timeout): claim, process, respond
+uv run python src/inbox.py claim oracle {id}  # Save the token returned
+uv run python src/inbox.py respond oracle {id} --token {token} --body "..."
 
-# 3. Block on reviews queue (50 min timeout)
-uv run python src/inbox.py wait reviews --timeout 3000
-
-# 4. If message (not timeout): claim, review, respond
-uv run python src/inbox.py claim reviews {id}  # Save the token returned
-uv run python src/inbox.py respond reviews {id} --token {token} --body "..."
-
-# 5. Loop back to step 1
+# 3. Loop back to step 1
 ```
 
-**On timeout (after 50 min wait):** Loop again. Timeout just means "no messages yet".
+**On timeout:** Loop again. Timeout just means "no messages yet".
 
 **Exit when:** User explicitly says stop, OR context limit approaching.
 

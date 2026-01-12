@@ -68,28 +68,28 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 
 **Common mistake:** "The inbox task was clear, so I just built it." NO. Clear scope ≠ approved approach. Get the design review.
 
-### Review Mechanism: Using the `reviews` Queue
+### Review Mechanism
 
-**Send to reviews queue:**
+**Send to oracle inbox:**
 ```bash
-uv run python src/inbox.py add reviews "Design: {topic}" \
+uv run python src/inbox.py add oracle "Design: {topic}" \
   --from engineer:{your_session_name} --priority HIGH --body "{details}"
 ```
 
 Use `"Design:"` prefix for pre-coding review, `"Code:"` prefix for post-coding review.
 
-**Wait for response** (this blocks until oracle responds or timeout):
+**Wait for response:**
 ```bash
-uv run python src/inbox.py wait engineer --from reviews --timeout 180
+uv run python src/inbox.py wait engineer --from oracle --timeout 180
 ```
 
-**IMPORTANT:** The `wait` command is not passive—you RUN it. It blocks until either:
-- Oracle responds (message arrives in your inbox)
-- Timeout expires (e.g., 180 seconds)
+This blocks until oracle responds or timeout (3 min).
 
-**If wait times out:**
-1. Spawn oracle subagent in background with daemon instructions: `Task tool, subagent_type="oracle", run_in_background=true, prompt="Enter daemon mode and process the reviews queue"`
-2. Run wait again: `uv run python src/inbox.py wait engineer --from reviews --timeout 180`
+**If no response:**
+- If oracle daemon is running (another tab): wait longer or ping user
+- If no daemon: spawn `reviewer` subagent with content directly in prompt
+
+**Never do both** (send to inbox AND spawn reviewer) - creates duplicate work.
 
 **When oracle says verify X:** STOP, verify, show evidence. Don't acknowledge and skip.
 

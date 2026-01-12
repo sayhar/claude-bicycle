@@ -41,8 +41,12 @@ Without this, Claude forgets your architectural decisions the moment the session
 ## Quick Start
 
 ```bash
-cp -r agent-framework/ your-project/
-cd your-project
+# Get the framework
+git clone https://github.com/sayhar/agent-framework my-project
+# Or copy into existing project:
+# cp -r agent-framework/ your-project/
+
+cd my-project
 claude
 ```
 
@@ -168,13 +172,13 @@ Agents grep these when relevant -- not loaded at boot.
 
 Engineers should check in with oracle before and after significant work. Design review before coding, code review after. (You can remind them if they forget.)
 
-**Daemon mode:** Have an oracle tab open to the side. It monitors its inbox, responds to reviews, and keeps you informed.
+**Daemon mode:** Have an oracle tab open to the side. It monitors its inbox, responds to review requests, and keeps you informed.
 
 ```
-"Enter daemon mode. Monitor the reviews inbox and respond to requests."
+"Enter daemon mode."
 ```
 
-Oracle will loop: check inbox -> wait for reviews -> respond -> repeat. It tells you what engineers are asking about.
+Oracle will loop: wait for messages -> claim -> review -> respond -> repeat.
 
 ---
 
