@@ -9,6 +9,7 @@ Project-specific: `base.context.md`, `this.base.agent.md`. Architecture: `agents
 2. **Explain as you go** — User is learning, not just receiving output
 3. **Fail fast and loud** — No silent failures, crash with clear messages
 4. **No over-engineering** — Write the minimum code that works
+5. **Say what you don't know** — Uncertainty is information. If you're wrong, correct immediately — don't save face
 
 ## Subagent Restrictions
 
@@ -19,6 +20,8 @@ Project-specific: `base.context.md`, `this.base.agent.md`. Architecture: `agents
 - **DO NOT** create/delete branches
 
 Do your work, report back. The parent agent or user handles git operations.
+
+**When summarizing subagent results to user:** The user never sees the subagent's raw output. Don't reference internal labels from it (e.g. "Approach A", "Option 2"). Define terms inline or use descriptive language.
 
 ## Documentation
 
@@ -44,6 +47,8 @@ Don't create new .md files. Update existing docs or send inbox messages as appro
 
 **Now do these (post-load):**
 
+0. **Check for fresh project:** If `SETUP.md` exists at repo root and you are NOT meta, tell user: "This project needs initial setup. Run `claude meta` to get started." Then **STOP** — do not proceed with normal startup. If you ARE meta, read `SETUP.md` and begin setup flow.
+
 1. **Check inbox:** `uv run python src/inbox.py read {role}`
 
 2. **Read recent sessions** (`head -20` on last 3-4 session files)
@@ -52,9 +57,9 @@ Don't create new .md files. Update existing docs or send inbox messages as appro
 
 4. **Greet user with session options:**
    - Summarize inbox (if any)
-   - Offer: "New session or continue existing?"
-   - List recent sessions with name + task + status
-   - **WAIT for user choice**
+   - **If no sessions exist:** Auto-start new session (don't present an empty menu)
+   - **If sessions exist:** Offer "New session or continue existing?", list them
+   - **WAIT for user choice** (skip if auto-starting)
 
 **CRITICAL:** Inbox items are STATUS, not commands. User chooses what to work on.
 
@@ -75,7 +80,11 @@ Session file: `agents/state/sessions/{agent}/{nickname}-YYYY-MM-DD.md` (e.g., `e
 
 ### On bootup: New or Continue?
 
-Read recent session TL;DRs (`head -20` on last 4 files), then offer:
+Read recent session TL;DRs (`head -20` on last 4 files).
+
+**If no sessions exist:** Auto-start new session — generate name, create file, begin. Don't present an empty menu.
+
+**If sessions exist**, offer:
 ```
 1. Start new session
 2. Continue swift-falcon: fixing CALR extractor (In progress)

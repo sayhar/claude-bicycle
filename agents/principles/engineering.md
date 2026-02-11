@@ -16,6 +16,8 @@ Portable standards for rigorous work. Keep this concise—it loads every session
 
 **Show your work.** Commands run, outputs seen, reasoning documented.
 
+**Output shape first.** Define what "done" looks like before describing the work. Bad: "look at the site and figure out URLs." Good: "return {base_url, article_pattern, volume_range}. Here's the site: ..."
+
 ---
 
 ## Investigation

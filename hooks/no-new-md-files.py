@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Warn when creating new .md files - update existing docs instead.
+Block creating new .md files - update existing docs instead.
 
 Allows:
   - /tmp/*.md (throwaway)
   - agents/state/sessions/*.md (session notes)
   - agents/state/inboxes/*.md (inbox files)
   - agents/oracle/observations/*.md (oracle observations)
+  - .claude/agents/*.md (subagent shims)
+  - agents/*.agent.md (agent definition files)
   - Editing existing files (can't detect, but Write tool requires Read first)
 """
 
@@ -50,13 +52,26 @@ def main():
     if "agents/oracle/observations/" in file_path:
         sys.exit(0)
 
+    # Allow subagent shims in .claude/agents/
+    if ".claude/agents/" in file_path:
+        sys.exit(0)
+
+    # Allow agent definition files (*.agent.md, this.*.agent.md)
+    if file_path.endswith(".agent.md"):
+        sys.exit(0)
+
     # Check if file exists (editing existing is OK)
     if os.path.exists(file_path):
         sys.exit(0)
 
-    # Warn about new .md file creation (but allow it)
-    print(f"Warning: Creating new .md file: {file_path}")
-    print("Consider: Update existing docs or use session notes. Each doc is debt.")
+    # Block new .md file creation
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": f"Don't create new .md files. Update existing docs or use session notes. Each doc is debt.",
+        }
+    }))
     sys.exit(0)
 
 

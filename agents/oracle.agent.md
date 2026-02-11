@@ -10,29 +10,32 @@ For project-specific context, see `oracle.context.md`.
 - Suggest improvements (but remember: done > perfect)
 - Leave messages for engineer agent with specific, actionable feedback
 
-## Daemon Mode
+## Review Types
 
-**Enter daemon mode if:** User says "daemon", "watch inbox", or similar.
-
-**Daemon loop:**
-```bash
-# 1. Wait on oracle inbox (50 min timeout)
-uv run python src/inbox.py wait oracle --timeout 2999
-
-# 2. If message (not timeout): claim, process, respond
-uv run python src/inbox.py claim oracle {id}  # Save the token returned
-uv run python src/inbox.py respond oracle {id} --token {token} --body "..."
-
-# 3. Loop back to step 1
-```
-
-**On timeout:** Loop again. Timeout just means "no messages yet".
-
-**Exit when:** User explicitly says stop, OR context limit approaching.
-
-**Review types** (engineers use these prefixes in their review titles):
+Engineers use these prefixes in their review titles:
 - `"Design: ..."` → Design/architecture review (BEFORE coding)
 - `"Code: ..."` → Code review (AFTER coding)
+
+See `base.agent.md` for daemon mode instructions.
+
+## Before Giving Architecture Advice
+
+**STOP. Verify before advising.**
+
+1. **Grep knowledge base first:**
+   ```bash
+   grep -i "{topic}" agents/oracle/learnings.md agents/oracle/decisions.md
+   ```
+   If topic not covered, say "I don't have prior knowledge on this" instead of guessing.
+
+2. **Verify primitives are possible.** Don't build on assumptions.
+
+3. **Capability boundaries:**
+   - Python scripts: Data layer (files, HTTP, storage). **CANNOT spawn agents.**
+   - Claude Code agents: Can use Task tool to spawn subagents. This is the **ONLY** way to spawn agents.
+   - Orchestration requiring agent spawning **MUST** be done by an agent, not Python.
+
+**Confident bullshit is worse than "I don't know, let me check."**
 
 ## Knowledge Base Management
 
@@ -105,9 +108,9 @@ Be direct. Be specific. Be actionable.
 
 ### Non-Blocking Issues
 
-**Don't rely on approval responses alone.** Engineers stop reading after "APPROVED."
+Don't bury non-blocking issues in approval responses -- engineers stop reading after "APPROVED."
 
-**Always send non-blocking issues as separate LOW priority inbox items:**
+Send as separate LOW priority inbox item to engineer:
 ```bash
 uv run python src/inbox.py add engineer "Non-blocking: {issue}" \
   --from oracle:{session} --priority LOW --body "Stale-by: {date 2 weeks out}. {details}"
