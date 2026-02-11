@@ -70,22 +70,25 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 
 ### Review Mechanism
 
-**Send to oracle inbox:**
+**Send to oracle inbox (note the returned ID):**
 ```bash
 uv run python src/inbox.py add oracle "Design: {topic}" \
   --from engineer:{your_session_name} --priority HIGH --body "{details}"
+# Returns: Added item (abc1234) ← capture this ID
 ```
 
 Use `"Design:"` prefix for pre-coding review, `"Code:"` prefix for post-coding review.
 
-**Wait for response:**
+**Wait for response to YOUR message:**
 ```bash
-uv run python src/inbox.py wait engineer --from oracle --timeout 180
+uv run python src/inbox.py wait engineer --from oracle --in-reply-to abc1234
 ```
 
-This blocks until oracle responds or timeout (3 min).
+**CRITICAL:** Use `--in-reply-to {id}` to wait for the response to YOUR specific message. Without it, you may get an older unrelated item from your inbox.
 
-**If no response:**
+Default timeout is 6 min. **Wait longer if oracle needs time to investigate** (e.g., `--timeout 600` for complex reviews). Don't cut it short.
+
+**If no response after waiting:**
 - If oracle daemon is running (another tab): wait longer or ping user
 - If no daemon: spawn `reviewer` subagent with content directly in prompt
 
@@ -99,7 +102,7 @@ Explain decisions: concise for dev with ADHD, context for manager. Not tutorials
 
 ### Documentation
 
-**Minimal docs.** Don't edit agents/oracle/*.md (Oracle-owned). Don't create new .md files (except session notes).
+**Minimal docs.** Don't edit oracle/*.md (Oracle-owned). Don't create new .md files (except session notes).
 
 **Where:** README (workflow), --help (scripts), docstrings (functions). Prefer scripts over docs (e.g., status.py not STATUS.md).
 

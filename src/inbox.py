@@ -24,7 +24,7 @@ from rich.panel import Panel
 
 console = Console()
 
-VALID_ROLES = ["engineer", "oracle", "meta", "reviews"]
+VALID_ROLES = ["engineer", "oracle", "meta", "architect"]
 VALID_PRIORITIES = ["HIGH", "MEDIUM", "LOW"]
 INBOX_DIR = Path("agents/state/inboxes")
 SESSIONS_DIR = Path("agents/state/sessions")
@@ -32,6 +32,15 @@ SESSIONS_DIR = Path("agents/state/sessions")
 # Lock timeout: long enough for slow filesystems, short enough to detect crashes
 # FileLock auto-releases on process exit, protecting against crashed processes
 LOCK_TIMEOUT = 30  # seconds
+
+# Role-based default timeouts for `wait` command (seconds)
+# Oracle runs daemon mode (long polling), engineer waits for quick responses
+ROLE_TIMEOUTS = {
+    "oracle": 2999,  # ~50 min - daemon polling
+    "engineer": 359,  # ~6 min - waiting for review response (oracle needs time to investigate)
+    "meta": 300,  # 5 min - default
+    "architect": 300,  # 5 min - default
+}
 
 
 def generate_item_id(title: str, from_agent: str, date_str: str, priority: str) -> str:
@@ -110,6 +119,7 @@ def parse_inbox(content: str) -> list[dict]:
         from_match = re.search(r"\*\*From:\*\*\s*(.+?)(?:\n|$)", part)
         date_match = re.search(r"\*\*Date:\*\*\s*(.+?)(?:\n|$)", part)
         priority_match = re.search(r"\*\*Priority:\*\*\s*(.+?)(?:\n|$)", part)
+        in_reply_to_match = re.search(r"\*\*In-Reply-To:\*\*\s*([a-f0-9]{7})(?:\n|$)", part)
         status_match = re.search(r"\*\*Status:\*\*\s*CLAIMED by (.+?)(?:\n|$)", part)
         claimed_at_match = re.search(r"\*\*Claimed At:\*\*\s*(.+?)(?:\n|$)", part)
 
@@ -117,6 +127,7 @@ def parse_inbox(content: str) -> list[dict]:
         from_agent = from_match.group(1).strip() if from_match else "Unknown"
         date_str = date_match.group(1).strip() if date_match else str(date.today())
         priority = priority_match.group(1).strip() if priority_match else "MEDIUM"
+        in_reply_to = in_reply_to_match.group(1).strip() if in_reply_to_match else None
         status = status_match.group(1).strip() if status_match else None
         claimed_at = claimed_at_match.group(1).strip() if claimed_at_match else None
 
@@ -128,11 +139,13 @@ def parse_inbox(content: str) -> list[dict]:
             item_id = generate_item_id(title, from_agent, date_str, priority)
 
         # Extract body (everything after last metadata line)
-        # Body comes after Claimed At, Status, or Priority (in that order)
+        # Body comes after Claimed At, Status, In-Reply-To, or Priority (in that order)
         if claimed_at:
             body_match = re.search(r"\*\*Claimed At:\*\*[^\n]*\n(.+)", part, re.DOTALL)
         elif status:
             body_match = re.search(r"\*\*Status:\*\*[^\n]*\n(.+)", part, re.DOTALL)
+        elif in_reply_to:
+            body_match = re.search(r"\*\*In-Reply-To:\*\*[^\n]*\n(.+)", part, re.DOTALL)
         else:
             body_match = re.search(r"\*\*Priority:\*\*[^\n]*\n(.+)", part, re.DOTALL)
         body = body_match.group(1).strip() if body_match else ""
@@ -146,6 +159,7 @@ def parse_inbox(content: str) -> list[dict]:
                 "from": from_agent,
                 "date": date_str,
                 "priority": priority,
+                "in_reply_to": in_reply_to,  # Thread correlation for responses
                 "status": status,  # None if unclaimed, session-id if claimed
                 "claimed_at": claimed_at,  # ISO 8601 timestamp or None
                 "body": body,
@@ -177,6 +191,9 @@ def format_item(item: dict) -> str:
         f"**Date:** {item['date']}",
         f"**Priority:** {item['priority']}",
     ]
+    # Add in_reply_to if present (for response threading)
+    if item.get("in_reply_to"):
+        lines.append(f"**In-Reply-To:** {item['in_reply_to']}")
     # Add status line if claimed
     if item.get("status"):
         lines.append(f"**Status:** CLAIMED by {item['status']}")
@@ -281,19 +298,20 @@ def cmd_peek(args: argparse.Namespace) -> None:
     """Return first unclaimed item as JSON (read-only, no side effects).
 
     With --from filter, only returns items from the specified sender role.
+    With --in-reply-to filter, only returns responses to the specified message ID.
     """
     import json
 
     role = args.role.lower()
     if role not in VALID_ROLES:
         console.print(
-            f"[red]Error:[/red] Unknown role '{role}'. Valid roles: {', '.join(VALID_ROLES)}",
-            file=sys.stderr,
+            f"[red]Error:[/red] Unknown role '{role}'. Valid roles: {', '.join(VALID_ROLES)}"
         )
         sys.exit(1)
 
-    # Parse optional --from filter (case-insensitive, strip whitespace)
+    # Parse optional filters
     from_filter = args.from_filter.strip().lower() if args.from_filter else None
+    in_reply_to_filter = args.in_reply_to.strip() if args.in_reply_to else None
 
     inbox_path = get_inbox_path(role)
     if not inbox_path.exists():
@@ -315,6 +333,11 @@ def cmd_peek(args: argparse.Namespace) -> None:
             if item_sender != from_filter:
                 continue
 
+        # Apply in_reply_to filter if provided (exact match)
+        if in_reply_to_filter:
+            if item.get("in_reply_to") != in_reply_to_filter:
+                continue
+
         # Return item as JSON (omit status field per Oracle)
         output = {
             "id": item["id"],
@@ -324,6 +347,8 @@ def cmd_peek(args: argparse.Namespace) -> None:
             "priority": item["priority"],
             "body": item["body"],
         }
+        if item.get("in_reply_to"):
+            output["in_reply_to"] = item["in_reply_to"]
         print(json.dumps(output))
         return
 
@@ -340,6 +365,9 @@ def cmd_wait(args: argparse.Namespace) -> None:
 
     With --from filter, only waits for items from the specified sender role.
     Items from other senders are ignored (behavioral change from unfiltered wait).
+
+    Timeout defaults are role-based (oracle=50min, engineer=3min) but can be
+    overridden with --timeout flag.
     """
     import json
     import time
@@ -347,15 +375,16 @@ def cmd_wait(args: argparse.Namespace) -> None:
     role = args.role.lower()
     if role not in VALID_ROLES:
         console.print(
-            f"[red]Error:[/red] Unknown role '{role}'. Valid roles: {', '.join(VALID_ROLES)}",
-            file=sys.stderr,
+            f"[red]Error:[/red] Unknown role '{role}'. Valid roles: {', '.join(VALID_ROLES)}"
         )
         sys.exit(1)
 
-    # Parse optional --from filter (case-insensitive, strip whitespace)
+    # Parse optional filters
     from_filter = args.from_filter.strip().lower() if args.from_filter else None
+    in_reply_to_filter = args.in_reply_to.strip() if args.in_reply_to else None
 
-    timeout = args.timeout  # seconds
+    # Use explicit --timeout if provided, otherwise role-based default
+    timeout = args.timeout if args.timeout is not None else ROLE_TIMEOUTS.get(role, 300)
     poll_interval = 5  # Check every 5 seconds
     start_time = time.time()
 
@@ -378,6 +407,11 @@ def cmd_wait(args: argparse.Namespace) -> None:
                     if item_sender != from_filter:
                         continue
 
+                # Apply in_reply_to filter if provided (exact match)
+                if in_reply_to_filter:
+                    if item.get("in_reply_to") != in_reply_to_filter:
+                        continue
+
                 # Return item as JSON (omit status field)
                 output = {
                     "id": item["id"],
@@ -387,6 +421,8 @@ def cmd_wait(args: argparse.Namespace) -> None:
                     "priority": item["priority"],
                     "body": item["body"],
                 }
+                if item.get("in_reply_to"):
+                    output["in_reply_to"] = item["in_reply_to"]
                 print(json.dumps(output))
                 return
 
@@ -767,6 +803,7 @@ def cmd_respond(args: argparse.Namespace) -> None:
             "date": str(date.today()),
             "priority": item["priority"],
             "body": body,
+            "in_reply_to": item_id,  # Thread correlation - lets sender wait for this specific response
         }
     # Lock released here
 
@@ -874,8 +911,9 @@ Examples:
   uv run python src/inbox.py read engineer
   uv run python src/inbox.py peek engineer                 # JSON output (non-blocking)
   uv run python src/inbox.py peek engineer --from oracle-daemon  # Only items from oracle-daemon
-  uv run python src/inbox.py wait engineer --timeout 300   # Block until item or timeout (5 min)
-  uv run python src/inbox.py wait engineer --from oracle-daemon --timeout 180  # Wait for oracle response
+  uv run python src/inbox.py wait oracle                    # Uses role default (50 min for oracle)
+  uv run python src/inbox.py wait engineer --from oracle    # Uses role default (3 min for engineer)
+  uv run python src/inbox.py wait engineer --timeout 60     # Override: explicit 60 sec
   uv run python src/inbox.py add engineer "Review code" --from oracle --priority HIGH
   uv run python src/inbox.py add engineer "Fix bug" --from oracle --priority MEDIUM --body "Check line 50"
   uv run python src/inbox.py delete engineer a3f4b2c  # by ID (safer)
@@ -898,6 +936,9 @@ Examples:
     peek_parser.add_argument(
         "--from", dest="from_filter", help="Only return items from this sender role"
     )
+    peek_parser.add_argument(
+        "--in-reply-to", dest="in_reply_to", help="Only return responses to this message ID"
+    )
     peek_parser.set_defaults(func=cmd_peek)
 
     # wait command
@@ -907,7 +948,13 @@ Examples:
         "--from", dest="from_filter", help="Only wait for items from this sender role"
     )
     wait_parser.add_argument(
-        "--timeout", type=int, default=300, help="Timeout in seconds (default: 300)"
+        "--in-reply-to", dest="in_reply_to", help="Only wait for responses to this message ID"
+    )
+    wait_parser.add_argument(
+        "--timeout",
+        type=int,
+        default=None,
+        help="Timeout in seconds (default: oracle=2999, engineer=359, others=300)",
     )
     wait_parser.set_defaults(func=cmd_wait)
 

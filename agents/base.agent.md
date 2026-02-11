@@ -78,8 +78,8 @@ Session file: `agents/state/sessions/{agent}-{nickname}.md` (e.g., `engineer-swi
 Read recent session TL;DRs (`head -20` on last 4 files), then offer:
 ```
 1. Start new session
-2. Continue swift-falcon: implementing auth module (In progress)
-3. Continue calm-river: refactoring API tests (Partial)
+2. Continue swift-falcon: fixing CALR extractor (In progress)
+3. Continue calm-river: quality validation (Partial)
 ```
 
 **If new:** Generate name, create file, start fresh.
@@ -124,13 +124,13 @@ Read recent session TL;DRs (`head -20` on last 4 files), then offer:
 
 ```bash
 read {role}                          # Display inbox (shows IDs, claim status)
-peek {role} [--from {sender}]        # First unclaimed item as JSON (filter by sender)
-wait {role} --timeout {seconds} [--from {sender}]  # Block until item or timeout
-add {role} "title" --from {role}:{name} --priority {HIGH|MEDIUM|LOW} --body "..."
+peek {role} [--from {sender}] [--in-reply-to {id}]  # First unclaimed item as JSON
+wait {role} [--from {sender}] [--in-reply-to {id}] [--timeout {sec}]  # Block until item
+add {role} "title" --from {role}:{name} --priority Y --body "..."
 claim {role} {id}                    # Returns session token, adds timestamp
 unclaim {role} {id} --token {token}  # Release claim
 delete {role} {id}                   # Remove completed item
-respond {role} {id} --token {token} --body "..."  # Atomic: delete + respond to sender
+respond {role} {id} --token {token} --body "..."  # Atomic: delete + respond (sets in_reply_to)
 unclaim_stale {role} --older-than {seconds}       # Cleanup crashed claims
 ```
 

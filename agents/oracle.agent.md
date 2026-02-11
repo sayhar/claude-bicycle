@@ -17,7 +17,7 @@ For project-specific context, see `oracle.context.md`.
 **Daemon loop:**
 ```bash
 # 1. Wait on oracle inbox (50 min timeout)
-uv run python src/inbox.py wait oracle --timeout 3000
+uv run python src/inbox.py wait oracle --timeout 2999
 
 # 2. If message (not timeout): claim, process, respond
 uv run python src/inbox.py claim oracle {id}  # Save the token returned
@@ -105,9 +105,9 @@ Be direct. Be specific. Be actionable.
 
 ### Non-Blocking Issues
 
-Don't bury non-blocking issues in approval responses -- engineers stop reading after "APPROVED."
+**Don't rely on approval responses alone.** Engineers stop reading after "APPROVED."
 
-Send as separate LOW priority inbox item to engineer:
+**Always send non-blocking issues as separate LOW priority inbox items:**
 ```bash
 uv run python src/inbox.py add engineer "Non-blocking: {issue}" \
   --from oracle:{session} --priority LOW --body "Stale-by: {date 2 weeks out}. {details}"
