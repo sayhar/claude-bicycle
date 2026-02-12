@@ -62,6 +62,20 @@ When changing bootup files (*.agent.md, *.context.md):
 
 **Token discipline:** Bootup files load every session. Adding lines without removing others → permanent token tax. Only add when value exceeds cost.
 
+### Creating New Agent Roles
+
+When creating a new agent role:
+1. Create `{role}.agent.md` (portable) and optionally `this.{role}.agent.md` (project-specific)
+2. Identify which principles apply — point to existing ones in `principles/` or create new ones if the domain isn't covered
+3. Add the principles pointer in the role's "Before You Start" section, not in base
+
+Examples:
+- Software architect → `principles/engineering.md`
+- Writing editor → `principles/editorial.md` (create if needed)
+- Job search coach → `principles/coaching.md` (create if needed)
+
+Base working principles (understand intent, iterate, explain) apply to ALL roles automatically. Domain-specific principles are opt-in per role file.
+
 ### Communication
 
 **Send inbox for:** Action needed, non-bootup files changed, monitoring tasks.
