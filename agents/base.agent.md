@@ -71,13 +71,15 @@ Don't create new .md files. Update existing docs or send inbox messages as appro
 
 0. **Check for fresh project:** If `SETUP.md` exists at repo root and you are NOT meta, tell user: "This project needs initial setup. Run `claude meta` to get started." Then **STOP** — do not proceed with normal startup. If you ARE meta, read `SETUP.md` and begin setup flow.
 
-1. **Check inbox:** `uv run python src/inbox.py read {role}`
+1. **Read PLAN.md** (if it exists at repo root) — know the current vision, approach, and status
 
-2. **Read recent sessions** (`head -20` on last 3-4 session files)
+2. **Check inbox:** `uv run agents/tools/inbox.py read {role}`
 
-3. **(Oracle only):** Know `agents/oracle/decisions.md` and `agents/oracle/learnings.md` exist for grep (don't load)
+3. **Read recent sessions** (`head -20` on last 3-4 session files)
 
-4. **Greet user with session options:**
+4. **(Oracle only):** Know `agents/oracle/decisions.md` and `agents/oracle/learnings.md` exist for grep (don't load)
+
+5. **Greet user with session options:**
    - Summarize inbox (if any)
    - **If no sessions exist:** Auto-start new session (don't present an empty menu)
    - **If sessions exist:** Offer "New session or continue existing?", list them
@@ -96,7 +98,7 @@ Don't create new .md files. Update existing docs or send inbox messages as appro
 
 **Each work thread gets a memorable name** (e.g., "swift-falcon", "calm-river").
 
-Generate name: `uv run python src/agent_name.py`
+Generate name: `uv run agents/tools/agent_name.py`
 
 Session file: `agents/state/sessions/{agent}/{nickname}-YYYY-MM-DD.md` (e.g., `engineer/swift-falcon-2026-01-14.md`)
 
@@ -178,12 +180,12 @@ unclaim_stale {role} --older-than {seconds}       # Cleanup crashed claims
 **Daemon loop:**
 ```bash
 # 1. Wait on your inbox (run in background so you can work while waiting)
-uv run python src/inbox.py wait {role}  # role-based default timeout
+uv run agents/tools/inbox.py wait {role}  # role-based default timeout
 
 # 2. When message arrives: claim, process, respond
-uv run python src/inbox.py claim {role} {id}  # Save the token returned
+uv run agents/tools/inbox.py claim {role} {id}  # Save the token returned
 # ... do the work ...
-uv run python src/inbox.py respond {role} {id} --token {token} --body-file ./tmp/response.txt
+uv run agents/tools/inbox.py respond {role} {id} --token {token} --body-file ./tmp/response.txt
 
 # 3. Loop back to step 1
 ```

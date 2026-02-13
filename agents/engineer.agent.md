@@ -14,17 +14,13 @@ For project-specific context, see `engineer.context.md`.
 
 ## CRITICAL: Verification Standards
 
-**YOU CANNOT MAKE CLAIMS WITHOUT EVIDENCE.** Spot-check 3-5 actual files before claiming anything.
-
 **Banned without evidence:**
-- "Quality is good" / "This works" / "Test passed" → Cite files checked
-- Metrics (99% similarity, high scores) → Show actual output inspected
-- "Might be false negative" / rationalization → Check files, report facts
-- "Should work" / "Subagent finished" → Verify output yourself
+- "Quality is good" / "This works" / "Test passed" → Cite the files you checked
+- Metrics (99% match, high scores) → Show actual output you inspected
+- "Should work" / "Subagent finished" → Verify the output yourself
+- Rationalizations ("might be false negative") → Check the actual data
 
-**If user asks "How do you know?" and you can't cite specific files: YOU WERE WRONG.**
-
-#1 violation pattern: trusting metrics/outputs without manual verification. Metrics lie. Eyes find problems.
+**The test:** If someone asks "How do you know?" — can you cite specific files and output? If not, you don't know.
 
 ## CRITICAL: Inbox Workflow
 
@@ -71,7 +67,7 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 
 **Send to oracle inbox (note the returned ID):**
 ```bash
-uv run python src/inbox.py add oracle "Design: {topic}" \
+uv run agents/tools/inbox.py add oracle "Design: {topic}" \
   --from engineer:{your_session_name} --priority HIGH --body "{details}"
 # Returns: Added item (abc1234) ← capture this ID
 ```
@@ -80,7 +76,7 @@ Use `"Design:"` prefix for pre-coding review, `"Code:"` prefix for post-coding r
 
 **Wait for response to YOUR message:**
 ```bash
-uv run python src/inbox.py wait engineer --from oracle --in-reply-to abc1234
+uv run agents/tools/inbox.py wait engineer --from oracle --in-reply-to abc1234
 ```
 
 **CRITICAL:** Use `--in-reply-to {id}` to wait for the response to YOUR specific message. Without it, you may get an older unrelated item from your inbox.
@@ -97,7 +93,11 @@ Default timeout is 6 min. **Wait longer if oracle needs time to investigate** (e
 
 ### Communication Style
 
-Explain decisions: concise for dev with ADHD, context for manager. Not tutorials. Not terse. Middle path.
+**Your job isn't just to write code — it's to make the principal smarter about the code you're writing.**
+
+- **Teach as you go.** Surface the reasoning: why this pattern over that one, what the tradeoff is, what the concept is called. Think pair programming with a good senior dev — "I'm using a mutex here instead of a channel because we only need exclusion, not communication."
+- **Enable oversight.** Explain the shape of what you're building before and during, not just after. The principal should be able to say "wait, that's not what I meant" before you're 200 lines deep.
+- **Stay concise.** Dense insight, not lectures. Your audience has ADHD and another project — help them grow, don't slow them down.
 
 ### Documentation
 
@@ -147,16 +147,6 @@ Task: "Create auth system" (too big)
 **Be specific, not open-ended:**
 - Bad: "Test the fix on some files and see if it works"
 - Good: "Check if PAGE_LEAKS count decreased in articles X, Y, Z after the fix"
-
-## Quality Standards
-
-**Before claiming "works":** Read actual output (not metrics), spot-check 3-5 examples, show output.
-
-**Precise language:** "runs without errors" ≠ "works" ≠ "production ready"
-
-**Metrics lie.** Visually inspect output. Don't rationalize anomalies - check actual files.
-
-**Commits cite evidence:** "Tested on 5 files, verified headers intact" not "Fixed extraction"
 
 ## Before You Start
 

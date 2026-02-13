@@ -30,7 +30,7 @@ You spin up five agents and they coordinate. One builds, one reviews, one keeps 
 
 Three weeks in, Claude asks "are we still using the retry pattern from the auth module?" It checks decisions.md. Yes. Proceeds correctly without asking you.
 
-You bring this to your next project. The roles you've defined, the patterns that work, the review calibration you trust. It's markdown files and a Python script -- you can read every file and understand what's happening.
+You bring this to your next project. The roles you've defined, the patterns that work, the review calibration you trust. It's markdown files and a couple Python scripts -- you can read every file and understand what's happening.
 
 Without this, Claude forgets your architectural decisions the moment the session ends. Reviews feel hollow because the reviewer has builder-brain. You re-explain the same context for the fifth time. The bicycle gives you leverage.
 
@@ -71,10 +71,12 @@ agents/
     sessions/          # Session continuity
     inboxes/           # Agent coordination
 
+  tools/
+    inbox.py           # Coordination CLI
+    agent_name.py      # Session name generator
+
 hooks/                 # Guardrails
-src/
-  inbox.py             # Coordination CLI
-  agent_name.py        # Session name generator
+PLAN.md                # Roadmap and current status
 ```
 
 ---
@@ -120,24 +122,24 @@ When you come back, Claude reads this and offers to continue. When context limit
 
 ### Inboxes
 
-Agents coordinate through `src/inbox.py`:
+Agents coordinate through `agents/tools/inbox.py`:
 
 ```bash
 # Send a message
-uv run python src/inbox.py add oracle "Review auth module" \
+uv run agents/tools/inbox.py add oracle "Review auth module" \
   --from engineer:swift-falcon --priority HIGH
 
 # Check your inbox
-uv run python src/inbox.py read engineer
+uv run agents/tools/inbox.py read engineer
 
 # Claim an item (prevents double-processing)
-uv run python src/inbox.py claim engineer abc123
+uv run agents/tools/inbox.py claim engineer abc123
 
 # Block until a message arrives
-uv run python src/inbox.py wait engineer --from oracle --timeout 300
+uv run agents/tools/inbox.py wait engineer --from oracle --timeout 300
 
 # Respond (atomic: deletes original + sends reply)
-uv run python src/inbox.py respond engineer abc123 --token xyz --body "Done."
+uv run agents/tools/inbox.py respond engineer abc123 --token xyz --body "Done."
 ```
 
 Handles concurrent access. No race conditions.

@@ -20,6 +20,8 @@ Before writing any code, the agent should be able to articulate:
 - **What does success look like?** (Specific, testable criteria)
 - **What are we NOT building?** (Scope boundaries)
 
+**Update `PLAN.md`** at repo root as understanding evolves — vision, approach, status, scope boundaries. This is the living spec that all agents read on startup. It sharpens through each round of Phase 1, not just the first.
+
 **Phase 2 — Autonomous: Build it.** Once the what/why is clear, the agent executes. Tests, code, iteration. The principal shouldn't need to micromanage. If the agent needs to come back with questions, it means Phase 1 wasn't thorough enough.
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.** Before implementing:
@@ -57,6 +59,14 @@ Agents can write tests easily. Lean into this. TDD is the standard approach:
 **Test before proceeding.** Each piece works before you build on top of it. Commit before moving to the next section.
 
 **Catch regressions.** LLMs often make unnecessary changes to unrelated logic. Run the full test suite, not just the test for the thing you changed.
+
+**Tests are the floor, not the ceiling.** Verification has layers:
+- **Tests** — always. Unit, integration, end-to-end.
+- **Review** — always. Design review before coding, code review before committing. Oracle, reviewer subagent, or both. This is not optional and gets skipped far too often.
+- **Metrics** — project-dependent. Output quality signals, coverage, smell detection.
+- **Self-review** — agent re-reads its own diff critically before sending to review.
+
+Define which optional layers your project uses in `this.engineer.agent.md`.
 
 ---
 
@@ -155,31 +165,27 @@ Failed attempt #1 teaches you the problem. Failed attempt #2 means you didn't le
 **"Bug until proven otherwise."** Missing data or broken functionality = our bug by default. Burden of proof is on claiming it's external.
 
 **Debugging steps:**
-1. **Verify the claim** — How many affected? All or some?
-2. **Check actual data** — Inspect the real source
-3. **Understand current code** — What's it assuming?
-4. **Form hypothesis** — "Code expects X, data has Y"
-5. **Test hypothesis** — Verify on 3-5 examples
-6. **Fix and verify** — Implement, test, document
+1. **Scope it** — How many affected? All or some?
+2. **Inspect reality** — Look at actual data/output, not summaries or metrics
+3. **Understand the code** — What is it assuming?
+4. **Hypothesize and test** — "Code expects X, reality has Y." Verify on 3-5 examples.
+5. **Fix and verify** — Implement, test, confirm on diverse cases
 
-**Before claiming unfixable:**
-1. Check actual sources (show the curl/grep output)
-2. Test 3-5 examples
-3. Document what you checked
+**Before claiming something can't be done:** Show your work. What did you check? What did you see? Conclusions without evidence aren't conclusions.
 
-**Red flag phrases:** "Source limitation", "data isn't there", "nothing we can do" — these require evidence.
+**Red flag phrases** (require evidence): "External limitation", "can't be done", "nothing we can do." If you're about to say one of these, stop and document what you actually checked.
 
-**Leverage error messages.** Copy-pasting error messages is often enough. Don't paraphrase errors — use the real text.
+**Leverage error messages.** Copy-paste real error text. Don't paraphrase — exact wording matters.
 
----
-
-## 9. Quality & Scope
-
-**Metrics lie.** "Found 300 items" might be garbage. Always spot-check.
+**Use metrics, but verify them.** Metrics are valuable signals — write them, run them. But "99% accuracy" might hide the 1% that matters. Metrics + spot-check = confidence. Never skip the spot-check.
 
 **Precise language:**
 - "runs without errors" ≠ "works" ≠ "production ready"
 - "should work" ≠ "tested and works"
+
+---
+
+## 9. Scope & Incremental Work
 
 **Maintain scope control.** Keep a separate list for "later" ideas. Don't let scope creep into the current task. If you discover something worth doing but it's not the current ask, note it and move on.
 
@@ -194,9 +200,6 @@ Failed attempt #1 teaches you the problem. Failed attempt #2 means you didn't le
 | Trap | Fix |
 |------|-----|
 | Started coding before understanding the task | Go back to Phase 1 — articulate what/why/success |
-| Checked one example, claimed "unfixable" | Check 5+, document findings |
-| Tested one case, shipped "done" | Test 3-5 diverse cases |
-| Trusted the metric without looking | Metrics + spot-check = confidence |
 | Wrote defensive code for hypotheticals | Remove code that handles impossible cases |
 | Clever one-liner over readable code | Clear code > showing off |
 | Multiple failed fixes layered on each other | Reset, implement cleanly |

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["rich>=13.0.0", "filelock>=3.12.0"]
+# ///
 """
 Inbox management CLI for agent communication.
 
 Usage:
-    uv run python src/inbox.py read {role}
-    uv run python src/inbox.py add {role} "title" --from X --priority Y [--body "..."]
-    uv run python src/inbox.py delete {role} {index_or_id}
+    uv run agents/tools/inbox.py read {role}
+    uv run agents/tools/inbox.py add {role} "title" --from X --priority Y [--body "..."]
+    uv run agents/tools/inbox.py delete {role} {index_or_id}
 """
 
 import argparse
@@ -908,18 +912,18 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  uv run python src/inbox.py read engineer
-  uv run python src/inbox.py peek engineer                 # JSON output (non-blocking)
-  uv run python src/inbox.py peek engineer --from oracle-daemon  # Only items from oracle-daemon
-  uv run python src/inbox.py wait oracle                    # Uses role default (50 min for oracle)
-  uv run python src/inbox.py wait engineer --from oracle    # Uses role default (3 min for engineer)
-  uv run python src/inbox.py wait engineer --timeout 60     # Override: explicit 60 sec
-  uv run python src/inbox.py add engineer "Review code" --from oracle --priority HIGH
-  uv run python src/inbox.py add engineer "Fix bug" --from oracle --priority MEDIUM --body "Check line 50"
-  uv run python src/inbox.py delete engineer a3f4b2c  # by ID (safer)
-  uv run python src/inbox.py delete engineer 1        # by index (shows warning)
-  uv run python src/inbox.py claim engineer a3f4b2c   # claim for exclusive work
-  uv run python src/inbox.py unclaim engineer a3f4b2c --token engineer-2026-01-02-003
+  uv run agents/tools/inbox.py read engineer
+  uv run agents/tools/inbox.py peek engineer                 # JSON output (non-blocking)
+  uv run agents/tools/inbox.py peek engineer --from oracle-daemon  # Only items from oracle-daemon
+  uv run agents/tools/inbox.py wait oracle                    # Uses role default (50 min for oracle)
+  uv run agents/tools/inbox.py wait engineer --from oracle    # Uses role default (3 min for engineer)
+  uv run agents/tools/inbox.py wait engineer --timeout 60     # Override: explicit 60 sec
+  uv run agents/tools/inbox.py add engineer "Review code" --from oracle --priority HIGH
+  uv run agents/tools/inbox.py add engineer "Fix bug" --from oracle --priority MEDIUM --body "Check line 50"
+  uv run agents/tools/inbox.py delete engineer a3f4b2c  # by ID (safer)
+  uv run agents/tools/inbox.py delete engineer 1        # by index (shows warning)
+  uv run agents/tools/inbox.py claim engineer a3f4b2c   # claim for exclusive work
+  uv run agents/tools/inbox.py unclaim engineer a3f4b2c --token engineer-2026-01-02-003
         """,
     )
 

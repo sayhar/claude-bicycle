@@ -28,6 +28,6 @@ For portable agent instructions, see `base.agent.md`.
 
 ```bash
 # Example commands
-uv run python src/main.py
-uv run ruff format
+uv run agents/tools/inbox.py read engineer
+uv run agents/tools/agent_name.py
 ```

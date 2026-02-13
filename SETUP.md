@@ -40,10 +40,9 @@ Replace `{PROJECT_NAME}` and "Agent Framework" with your actual project name.
 
 ## 3. Dependencies
 
-- [ ] **Install uv** (if needed)
-- [ ] **Install deps**: `uv sync`
-- [ ] **Test inbox**: `uv run python src/inbox.py read engineer` (should show empty)
-- [ ] **Test name gen**: `uv run python src/agent_name.py` (should output a name)
+- [ ] **Install uv** (if needed): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- [ ] **Test inbox**: `uv run agents/tools/inbox.py read engineer` (should show empty — uv auto-installs script deps on first run)
+- [ ] **Test name gen**: `uv run agents/tools/agent_name.py` (should output a name)
 
 ---
 
@@ -122,25 +121,22 @@ Skip to section 6 (Cleanup).
 
 For new projects, tech decisions should be reviewed before implementing.
 
-Send to oracle:
-```bash
-uv run python src/inbox.py add oracle "Setup Review: Technical approach for {PROJECT_NAME}" \
-  --from meta:setup --priority HIGH --body "
-## Technical Decisions to Review
+Spawn a reviewer subagent to review the technical approach inline:
+
+```
+Use the Task tool with subagent_type="reviewer" to review:
 
 - Tech stack: [languages, frameworks, databases]
 - Architecture: [pattern, structure]
 - Key libraries: [and why]
+- Any tradeoffs or open questions
 
-## Open Questions
-
-[Any tradeoffs or uncertainties]
-"
+Include the filled-in context files in the prompt so the reviewer has full context.
 ```
 
-- [ ] Sent inbox to oracle
+Update context files based on reviewer feedback, then proceed to cleanup.
 
-**Next:** Run `claude oracle` to review, then `claude engineer` to implement.
+- [ ] Architecture reviewed
 
 ---
 
@@ -150,7 +146,7 @@ When setup is complete:
 
 ```bash
 rm SETUP.md
-uv run python src/inbox.py delete meta ba68b7c
+uv run agents/tools/inbox.py delete meta ba68b7c
 ```
 
-Then prompt user: "Setup complete! Type `/exit` and run `claude oracle` to review technical decisions before implementing." (For existing projects with established tech stack, they can go straight to `claude engineer`.)
+Then prompt user: "Setup complete! Type `/exit` and run `claude engineer` to start building."

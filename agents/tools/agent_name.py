@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """
 Generate memorable agent names (adjective-noun pairs).
 
 Usage:
-    uv run python src/agent_name.py           # Generate random name
-    uv run python src/agent_name.py --check   # List all possible names
-    uv run python src/agent_name.py --sample 20  # Preview 20 random names
+    uv run agents/tools/agent_name.py           # Generate random name
+    uv run agents/tools/agent_name.py --check   # List all possible names
+    uv run agents/tools/agent_name.py --sample 20  # Preview 20 random names
 """
 
 import random

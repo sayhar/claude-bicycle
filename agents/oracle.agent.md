@@ -112,7 +112,7 @@ Don't bury non-blocking issues in approval responses -- engineers stop reading a
 
 Send as separate LOW priority inbox item to engineer:
 ```bash
-uv run python src/inbox.py add engineer "Non-blocking: {issue}" \
+uv run agents/tools/inbox.py add engineer "Non-blocking: {issue}" \
   --from oracle:{session} --priority LOW --body "Stale-by: {date 2 weeks out}. {details}"
 ```
 
