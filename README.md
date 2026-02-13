@@ -48,9 +48,7 @@ cd my-project
 claude
 ```
 
-Say "meta" -- it walks you through setup.
-
-Or work through `SETUP.md` manually.
+Type anything (e.g. "go") -- setup starts automatically.
 
 ---
 
