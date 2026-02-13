@@ -1,6 +1,8 @@
-# Project Setup Checklist
+# Project Setup
 
-Work through this with `claude meta` or manually. When complete, delete this file.
+You are setting up an agent coordination framework for Claude Code. No agent roles exist yet — you're just Claude with these instructions. Work through each section with the user.
+
+When done, you'll write the real `.claude/CLAUDE.md` and delete this file. The agent system bootstraps itself into existence through this process.
 
 ---
 
@@ -12,141 +14,121 @@ Work through this with `claude meta` or manually. When complete, delete this fil
   git remote set-url --push upstream DISABLE
   ```
 
-This keeps `upstream` for pulling agent-framework updates (`git fetch upstream && git merge upstream/main`) but blocks accidental pushes back to it. Add your own `origin` later when you have a repo for this project.
+Keeps `upstream` for pulling framework updates (`git fetch upstream && git merge upstream/main`) but blocks accidental pushes. Add your own `origin` later.
 
 ---
 
 ## 2. Project Identity
 
-Replace `{PROJECT_NAME}` and "Agent Framework" with your actual project name.
+> **Ask the user:** What should we call this project?
 
-- [ ] `README.md` - Line 1: `# Agent Framework` → `# YourProjectName`
-- [ ] `.claude/CLAUDE.md` - Line 1: `# {PROJECT_NAME} Agent System`
-- [ ] `agents/base.context.md` - Line 1
-- [ ] `agents/this.base.agent.md` - Line 1
-- [ ] `agents/engineer.context.md` - Line 1
-- [ ] `agents/this.engineer.agent.md` - Line 1
-- [ ] `agents/oracle.context.md` - Line 1
-- [ ] `agents/this.oracle.agent.md` - Line 1
-- [ ] `agents/this.meta.agent.md` - Line 1
+Replace `{PROJECT_NAME}` with the answer in these files (line 1 of each):
+- `agents/base.context.md`
+- `agents/this.base.agent.md`
+- `agents/this.engineer.agent.md`
+- `agents/this.meta.agent.md`
+- `agents/this.oracle.agent.md`
+- `agents/engineer.context.md`
+- `agents/oracle.context.md`
 
-> **Ask user:** What should we call this project?
-
-**Quick replace (macOS):** `grep -rl "{PROJECT_NAME}" agents/ .claude/ | xargs sed -i '' 's/{PROJECT_NAME}/YourProjectName/g'`
-
-**Quick replace (Linux):** `grep -rl "{PROJECT_NAME}" agents/ .claude/ | xargs sed -i 's/{PROJECT_NAME}/YourProjectName/g'`
+Also: `README.md` line 1 — `# Agent Framework` → `# {project name}`
 
 ---
 
 ## 3. Dependencies
 
 - [ ] **Install uv** (if needed): `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- [ ] **Test inbox**: `uv run agents/tools/inbox.py read engineer` (should show empty — uv auto-installs script deps on first run)
+- [ ] **Test inbox**: `uv run agents/tools/inbox.py read engineer` (should show empty)
 - [ ] **Test name gen**: `uv run agents/tools/agent_name.py` (should output a name)
 
 ---
 
-## 4. Project Context (THE IMPORTANT PART)
+## 4. Project Context
 
 This is a kickoff conversation. Take time here.
 
----
+### 4.1 What & Why → `agents/base.context.md`
 
-### 4.1 What & Why (`agents/base.context.md`)
+- What are we building? (1-2 sentences, what type — CLI, web app, library, API, script)
+- Why? (Problem, who has it, why it matters)
+- Goals? (Success criteria, scope, what we're NOT doing)
 
-**What are we building?**
-- Describe it in 1-2 sentences
-- What type of thing is it? (CLI, web app, library, API, script, etc.)
+### 4.2 Domain Knowledge → `agents/engineer.context.md`
 
-**Why are we building it?**
-- What problem does this solve?
-- Who has this problem? Who's the user?
-- Why does this matter? What's the motivation?
+- Domain, terminology, concepts, gotchas?
+- External deps? APIs, data sources, quirks?
 
-**What are our goals?**
-- What does success look like?
-- How will we know it's working?
-- What's the scope? (MVP, full product, experiment, etc.)
-- What are we explicitly NOT trying to do?
+### 4.3 Constraints & Quality → `agents/oracle.context.md`
 
-- [ ] Filled in `agents/base.context.md`
-
----
-
-### 4.2 Domain Knowledge (`agents/engineer.context.md`)
-
-**What do we need to understand?**
-- What domain is this in?
-- What terminology or jargon matters?
-- What concepts are essential?
-- Any gotchas or counterintuitive things?
-
-**What external things are involved?**
-- APIs, data sources, third-party services?
-- Their quirks or limitations?
-
-- [ ] Filled in `agents/engineer.context.md`
-
----
-
-### 4.3 Constraints & Quality (`agents/oracle.context.md`)
-
-**What constraints exist?**
-- Tech preferences? Performance requirements?
-- Dependencies we must use or avoid?
-
-**What matters most?**
-- Correctness? Performance? Readability? Speed?
-- What's the quality bar? (MVP, production, enterprise?)
-
-- [ ] Filled in `agents/oracle.context.md`
-
----
+- Tech preferences, performance requirements, must-use/avoid deps?
+- Quality bar: correctness vs speed vs readability? MVP or production?
 
 ### 4.4 Existing Codebase
 
-**If adding agent-framework to an existing project:**
+Adding to an existing project? Write tech stack and architecture as facts in context files, skip to section 6.
 
-Tech stack and architecture are already decided - write them as facts in context files:
-- `base.context.md` - tech stack, project structure
-- `engineer.context.md` - architecture, key modules, how things connect
-
-Skip to section 6 (Cleanup).
-
-**If starting a new project:** Continue to section 5.
+New project? Continue to section 5.
 
 ---
 
 ## 5. Architecture Review (new projects only)
 
-For new projects, tech decisions should be reviewed before implementing.
-
-Spawn a reviewer subagent to review the technical approach inline:
+Spawn a reviewer subagent:
 
 ```
-Use the Task tool with subagent_type="reviewer" to review:
-
-- Tech stack: [languages, frameworks, databases]
-- Architecture: [pattern, structure]
-- Key libraries: [and why]
-- Any tradeoffs or open questions
-
-Include the filled-in context files in the prompt so the reviewer has full context.
+Use Task tool with subagent_type="reviewer" to review:
+- Tech stack, architecture, key libraries, tradeoffs
+Include the filled-in context files for full context.
 ```
 
-Update context files based on reviewer feedback, then proceed to cleanup.
-
-- [ ] Architecture reviewed
+Update context files based on feedback.
 
 ---
 
-## 6. Cleanup
+## 6. Plan
 
-When setup is complete:
+Fill in `PLAN.md` at the repo root. Vision and Approach should be clear from the conversation so far. Phases can be rough — they'll sharpen as work begins.
 
-```bash
-rm SETUP.md
-uv run agents/tools/inbox.py delete meta ba68b7c
-```
+---
 
-Then prompt user: "Setup complete! Type `/exit` and run `claude engineer` to start building."
+## 7. Finalize
+
+Write `.claude/CLAUDE.md` with the contents below (replacing `{PROJECT_NAME}` with the actual project name), then delete this file (`SETUP.md`).
+
+Tell the user: "Setup complete! Type `/exit` and run `claude engineer` to start building."
+
+**Contents for `.claude/CLAUDE.md`:**
+
+````
+# {PROJECT_NAME} Agent System
+
+**Base context (always loaded):**
+
+@../agents/base.agent.md
+@../agents/this.base.agent.md
+@../agents/base.context.md
+
+---
+
+**Role routing (load based on user's first message):**
+
+If user says "**engineer**" or asks for implementation/coding help:
+- Read `agents/engineer.agent.md`
+- Read `agents/this.engineer.agent.md`
+- Read `agents/engineer.context.md`
+- Read `agents/principles/engineering.md`
+
+If user says "**oracle**" or asks for code review/critique:
+- Read `agents/oracle.agent.md`
+- Read `agents/this.oracle.agent.md`
+- Read `agents/oracle.context.md`
+- Read `agents/principles/engineering.md`
+
+If user says "**meta**" or asks about the agent system itself:
+- Read `agents/meta.agent.md`
+- Read `agents/this.meta.agent.md`
+- Read `agents/meta.context.md`
+- Read `agents/principles/engineering.md`
+
+**Default:** If unclear, assume engineer (implementation work).
+````

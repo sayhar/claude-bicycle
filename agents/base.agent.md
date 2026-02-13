@@ -69,8 +69,6 @@ Don't create new .md files. Update existing docs or send inbox messages as appro
 
 **Now do these (post-load):**
 
-0. **Check for fresh project:** If `SETUP.md` exists at repo root and you are NOT meta, tell user: "This project needs initial setup. Run `claude meta` to get started." Then **STOP** — do not proceed with normal startup. If you ARE meta, read `SETUP.md` and begin setup flow.
-
 1. **Read PLAN.md** (if it exists at repo root) — know the current vision, approach, and status
 
 2. **Check inbox:** `uv run agents/tools/inbox.py read {role}`
