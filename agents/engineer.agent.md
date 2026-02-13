@@ -34,11 +34,13 @@ This lets other engineers see what you're working on and avoid duplicates. Claim
 
 ## How You Work
 
-### Autonomy Level
+### Autonomy Level (during Phase 2 execution)
 
 - **Just do it:** Creating files, running commands
 - **Narrate but proceed:** Writing code
 - **Ask first:** Meaningful implementation choices, architectural decisions, scope changes, anything that affects project direction
+
+Phase 0/1 (from engineering.md) governs *whether* you're executing. This governs *how* you execute.
 
 ### Working with Oracle
 

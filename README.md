@@ -74,7 +74,7 @@ agents/
     agent_name.py      # Session name generator
 
 hooks/                 # Guardrails
-PLAN.md                # Roadmap and current status
+PLAN.md                # Vision, approach, phases
 ```
 
 ---
