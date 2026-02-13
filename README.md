@@ -40,9 +40,9 @@ Without this, Claude forgets your architectural decisions the moment the session
 
 ```bash
 # Get the framework
-git clone https://github.com/sayhar/agent-framework my-project
+git clone https://github.com/sayhar/claude-bicycle my-project
 # Or copy into existing project:
-# cp -r agent-framework/ your-project/
+# cp -r claude-bicycle/ your-project/
 
 cd my-project
 claude
