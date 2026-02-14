@@ -217,6 +217,7 @@ Optional guardrails in `hooks/`:
 | `require-uv.py` | Blocks bare `python`/`pip` -- forces `uv run` |
 | `warn-conventional-commit.py` | Warns on non-conventional commit messages |
 | `no-new-md-files.py` | Warns when creating .md files |
+| `no-auto-memory.py` | Blocks writes to Claude's auto-memory -- use bootup files instead |
 
 Enable in `.claude/settings.local.json`. They teach Claude your preferences by blocking bad patterns.
 
